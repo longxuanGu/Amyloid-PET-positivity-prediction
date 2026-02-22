@@ -41,15 +41,15 @@ model = load_model()
 # ========================
 
 st.title("淀粉样蛋白PET阳性预测")
-st.subheader("Amyloid PET Positivity Prediction (Random Forest + SHAP)")
+st.subheader("Amyloid PET Positivity Prediction")
 
 st.sidebar.header("输入特征 | Input Features")
 
 cingulum_mid_r = st.sidebar.slider(
-    "右侧中扣带回FDG SUVR | Cingulum_Mid_R_FDG", 0.0, 3.0, 0.0, 0.01
+    "右侧扣带回中部FDG SUVR | Cingulum_Mid_R_FDG", 0.0, 3.0, 0.0, 0.01
 )
 cingulum_post_l = st.sidebar.slider(
-    "左侧后扣带回FDG SUVR | Cingulum_Post_L_FDG", 0.0, 3.0, 0.0, 0.01
+    "左侧扣带回后部FDG SUVR | Cingulum_Post_L_FDG", 0.0, 3.0, 0.0, 0.01
 )
 occipital_mid_l = st.sidebar.slider(
     "左侧枕中回FDG SUVR | Occipital_Mid_L_FDG", 0.0, 3.0, 0.0, 0.01
@@ -144,9 +144,7 @@ if st.button("运行预测 | Run Prediction", type="primary", use_container_widt
                 os.remove("temp_force_plot.html")
 
             st.caption(
-                "红色表示推动模型预测为阳性，蓝色表示推动模型预测为阴性 | "
-                "Red pushes toward positive prediction, blue toward negative"
-            )
+                "红色表示推动模型预测为阳性，蓝色表示推动模型预测为阴性 ")
 
             # ========================
             # Panel B — Waterfall
@@ -159,9 +157,7 @@ if st.button("运行预测 | Run Prediction", type="primary", use_container_widt
             plt.close(figB)
 
             st.caption(
-                "各脑区FDG代谢对淀粉样蛋白阳性预测的贡献 | "
-                "Contribution of each brain region to amyloid positivity prediction"
-            )
+                "各脑区FDG代谢对淀粉样蛋白阳性预测的贡献")
 
         except Exception as e:
             st.error(f"Error: {e}")
