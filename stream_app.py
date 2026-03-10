@@ -13,7 +13,7 @@ import os
 # ========================
 
 st.set_page_config(
-    page_title="淀粉样蛋白PET阳性预测 | Amyloid PET Positivity Prediction",
+    page_title="淀粉样蛋白PET阳性预测",
     layout="centered"
 )
 
@@ -41,24 +41,23 @@ model = load_model()
 # ========================
 
 st.title("淀粉样蛋白PET阳性预测")
-st.subheader("Amyloid PET Positivity Prediction")
 
-st.sidebar.header("输入特征 | Input Features")
+st.sidebar.header("输入特征 ")
 
 cingulum_mid_r = st.sidebar.slider(
-    "右侧扣带回中部FDG SUVR | Cingulum_Mid_R_FDG", 0.0, 3.0, 0.0, 0.01
+    "右侧扣带回中部FDG SUVR", 0.0, 3.0, 0.0, 0.01
 )
 cingulum_post_l = st.sidebar.slider(
-    "左侧扣带回后部FDG SUVR | Cingulum_Post_L_FDG", 0.0, 3.0, 0.0, 0.01
+    "左侧扣带回后部FDG SUVR", 0.0, 3.0, 0.0, 0.01
 )
 occipital_mid_l = st.sidebar.slider(
-    "左侧枕中回FDG SUVR | Occipital_Mid_L_FDG", 0.0, 3.0, 0.0, 0.01
+    "左侧枕中回FDG SUVR", 0.0, 3.0, 0.0, 0.01
 )
 precuneus_r = st.sidebar.slider(
-    "右侧楔前叶FDG SUVR | Precuneus_R_FDG", 0.0, 3.0, 0.0, 0.01
+    "右侧楔前叶FDG SUVR", 0.0, 3.0, 0.0, 0.01
 )
 temporal_mid_l = st.sidebar.slider(
-    "左侧颞中回FDG SUVR | Temporal_Mid_L_FDG", 0.0, 3.0, 0.0, 0.01
+    "左侧颞中回FDG SUVR", 0.0, 3.0, 0.0, 0.01
 )
 
 # ========================
@@ -67,13 +66,34 @@ temporal_mid_l = st.sidebar.slider(
 
 # ========================
 
-input_data = pd.DataFrame({
+# 1. 构建用于模型预测的 DataFrame（必须与训练集的特征名保持完全一致！）
+input_data_model = pd.DataFrame({
     "Cingulum_Mid_R_FDG": [cingulum_mid_r],
     "Cingulum_Post_L_FDG": [cingulum_post_l],
     "Occipital_Mid_L_FDG": [occipital_mid_l],
     "Precuneus_R_FDG": [precuneus_r],
-    "Temporal_Mid_L_FDG": [temporal_mid_l]
+    "Temporal_Mid_L_FDG":[temporal_mid_l]
 })
+
+# 执行预测 (使用英文列名的数据)
+# prediction = model.predict(input_data_model) 
+
+# ---------------------------------------------------------
+
+# 2. 构建用于 Streamlit 网页表格展示 / SHAP 可视化的 DataFrame
+# 使用 rename 方法将英文列名映射为中文
+feature_name_mapping = {
+    "Cingulum_Mid_R_FDG": "右侧扣带回中部FDG SUVR",
+    "Cingulum_Post_L_FDG": "左侧扣带回后部FDG SUVR",
+    "Occipital_Mid_L_FDG": "左侧枕中回FDG SUVR",
+    "Precuneus_R_FDG": "右侧楔前叶FDG SUVR",
+    "Temporal_Mid_L_FDG": "左侧颞中回FDG SUVR"
+}
+
+input_data_display = input_data_model.rename(columns=feature_name_mapping)
+
+# 在网页上展示中文表格
+# st.dataframe(input_data_display) 
 
 # ========================
 
@@ -81,9 +101,9 @@ input_data = pd.DataFrame({
 
 # ========================
 
-if st.button("运行预测 | Run Prediction", type="primary", use_container_width=True):
+if st.button("运行预测", type="primary", use_container_width=True):
 
-    with st.spinner("正在计算预测结果与SHAP解释 | Generating prediction and SHAP explanations..."):
+    with st.spinner("正在计算预测结果与SHAP解释"):
 
         try:
             # ---------- Prediction ----------
@@ -97,16 +117,16 @@ if st.button("运行预测 | Run Prediction", type="primary", use_container_widt
                 prob_pos = None
 
             class_map = {
-                0: "淀粉样蛋白PET预测阴性 | Amyloid PET Negative",
-                1: "淀粉样蛋白PET预测阳性 | Amyloid PET Positive"
+                0: "淀粉样蛋白PET预测阴性",
+                1: "淀粉样蛋白PET预测阳性 "
             }
 
-            st.success(f"**预测结果 | Predicted Class:** {class_map.get(pred_class, str(pred_class))}")
+            st.success(f"**预测结果:** {class_map.get(pred_class, str(pred_class))}")
 
             if prob_pos is not None:
-                st.write(f"**阳性概率 | Probability of Amyloid Positivity:** {prob_pos:.3f}")
+                st.write(f"**阳性概率:** {prob_pos:.3f}")
             else:
-                st.write("**阳性概率 | Probability:** N/A")
+                st.write("**阳性概率:** N/A")
 
             # ---------- SHAP ----------
             explainer = shap.TreeExplainer(model)
@@ -129,7 +149,7 @@ if st.button("运行预测 | Run Prediction", type="primary", use_container_widt
             # ========================
             # Panel A — Force Plot
             # ========================
-            st.markdown("### **SHAP力图 | SHAP Force Plot**")
+            st.markdown("### **SHAP力图**")
 
             force_plot_html = shap.plots.force(
                 explanation,
@@ -149,7 +169,7 @@ if st.button("运行预测 | Run Prediction", type="primary", use_container_widt
             # ========================
             # Panel B — Waterfall
             # ========================
-            st.markdown("### **SHAP瀑布图 | SHAP Waterfall Plot**")
+            st.markdown("### **SHAP瀑布图**")
 
             figB = plt.figure(figsize=(8, 5.5))
             shap.plots.waterfall(explanation, show=False)
@@ -163,11 +183,3 @@ if st.button("运行预测 | Run Prediction", type="primary", use_container_widt
             st.error(f"Error: {e}")
             st.exception(e)
 
-# ========================
-
-# Footer
-
-# ========================
-
-st.markdown("---")
-st.caption("淀粉样蛋白PET阳性预测 | Amyloid PET Positivity Prediction App © 2026")
