@@ -3,6 +3,7 @@ import shap
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
 import pandas as pd
 import os
 import streamlit.components.v1 as components
@@ -15,9 +16,20 @@ st.set_page_config(
     layout="centered"
 )
 
-# ⚠️ 关键修改：替换字体以支持 Matplotlib 瀑布图显示中文，防止出现方块乱码
-plt.rcParams["font.family"] = "sans-serif"
-plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei", "Arial Unicode MS"] # 优先使用黑体或微软雅黑
+# ⚠️ 终极修改：动态加载同目录下的字体文件，彻底解决跨平台 Matplotlib 中文乱码
+font_path = "simhei.ttf"  # 确保此字体文件与 app.py 在同一目录下
+
+if os.path.exists(font_path):
+    # 将字体添加到 matplotlib 的字体管理器中
+    fm.fontManager.addfont(font_path)
+    # 获取字体的英文名称并设置为全局字体
+    prop = fm.FontProperties(fname=font_path)
+    plt.rcParams["font.family"] = prop.get_name()
+else:
+    st.warning("⚠️ 未在当前目录找到中文字体文件 `simhei.ttf`，图表中文可能显示为方块。")
+    # Fallback 方案 (仅在本地 Windows 系统可能有救)
+    plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei", "Arial Unicode MS"]
+
 plt.rcParams["axes.unicode_minus"] = False
 plt.rcParams["figure.dpi"] = 300
 
@@ -26,6 +38,7 @@ plt.rcParams["figure.dpi"] = 300
 # ========================
 @st.cache_resource
 def load_model():
+    # 请确保 rf_model.pkl 在同级目录下
     with open("rf_model.pkl", "rb") as f:
         return pickle.load(f)
 
@@ -36,7 +49,7 @@ model = load_model()
 # ========================
 st.title("淀粉样蛋白PET阳性预测")
 
-st.sidebar.header("输入特征 ")
+st.sidebar.header("输入特征")
 
 cingulum_mid_r = st.sidebar.slider("右侧扣带回中部FDG SUVR", 0.0, 3.0, 0.0, 0.01)
 cingulum_post_l = st.sidebar.slider("左侧扣带回后部FDG SUVR", 0.0, 3.0, 0.0, 0.01)
@@ -76,7 +89,7 @@ chinese_feature_names = [feature_name_mapping[col] for col in input_data.columns
 
 if st.button("运行预测", type="primary", use_container_width=True):
 
-    with st.spinner("正在计算预测结果与SHAP解释"):
+    with st.spinner("正在计算预测结果与SHAP解释..."):
 
         try:
             # ---------- Prediction ----------
@@ -120,7 +133,7 @@ if st.button("运行预测", type="primary", use_container_width=True):
                 values=sv,
                 base_values=base,
                 data=input_data.iloc[0].values, # 传入数值本身
-                feature_names=chinese_feature_names # 注入中文列名！
+                feature_names=chinese_feature_names # 注入中文列名
             )
 
             # ========================
@@ -155,7 +168,7 @@ if st.button("运行预测", type="primary", use_container_width=True):
 
             figB = plt.figure(figsize=(8, 5.5))
             
-            # 这里的 explanation 已经自带中文名了，直接画图即可
+            # 这里的 explanation 已经自带中文名了，且 matplotlib 已加载中文字体，直接画图即可
             shap.plots.waterfall(explanation, show=False)
             
             st.pyplot(figB)
